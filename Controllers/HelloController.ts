@@ -1,5 +1,5 @@
-import { BaseController } from "../Core/Controller/BaseController";
-import type { RouteSchema } from "../types";
+import { BaseController } from "../src/Core/Controller/BaseController";
+import type { RouteSchema } from "../src/types";
 
 export class HelloController<T extends ""> extends BaseController<T> {
   constructor() {

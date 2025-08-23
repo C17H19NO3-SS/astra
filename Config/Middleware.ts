@@ -1,4 +1,3 @@
-import type { Handler } from "elysia";
 import { HelloController } from "../Controllers/HelloController";
 import { exampleMiddleware } from "../Middleware/example";
 import { rateLimiter } from "../Middleware/RateLimiter";
@@ -6,7 +5,7 @@ import { rateLimiter } from "../Middleware/RateLimiter";
 export const Middlewares = [
   {
     Class: HelloController,
-    middleware: exampleMiddleware as Handler,
+    middleware: exampleMiddleware,
     priority: 1,
   },
   {

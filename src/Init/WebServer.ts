@@ -1,7 +1,7 @@
 import Elysia from "elysia";
-import { Routes } from "../Config/Routes";
+import { Routes } from "../../Config/Routes";
 import { swagger } from "@elysiajs/swagger";
-import { Middlewares } from "../Config/Middleware";
+import { Middlewares } from "../../Config/Middleware";
 
 /**
  * Initializes and configures the web server using Elysia framework.

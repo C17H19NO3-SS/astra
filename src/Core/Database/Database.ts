@@ -1,7 +1,7 @@
 import {
   MYSQL_CONNECTION_STRING,
   SQLITE_DATABASE,
-} from "../../Config/Database";
+} from "../../../Config/Database";
 import { MysqlDriver } from "./Mysql";
 import { SQLiteDriver } from "./Sqlite";
 

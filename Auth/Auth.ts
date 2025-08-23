@@ -1,5 +1,5 @@
-import { BaseAuth } from "../Core/Auth/BaseAuth";
-import type { User } from "../types";
+import { BaseAuth } from "../src/Core/Auth/BaseAuth";
+import type { User } from "../src/types";
 import { JwtUtils } from "../Utils/JwtUtils";
 
 export class ExampleAuth extends BaseAuth<User> {

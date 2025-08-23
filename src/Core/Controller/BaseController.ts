@@ -1,7 +1,7 @@
 import Elysia, { type Handler } from "elysia";
 import type { Schema, User } from "../../types";
 import { BaseAuth } from "../Auth/BaseAuth";
-import { ExampleAuth } from "../../Auth/Auth";
+import { ExampleAuth } from "../../../Auth/Auth";
 
 /**
  * Optimized BaseController for Elysia framework.
