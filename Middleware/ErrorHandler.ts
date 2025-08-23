@@ -1,5 +1,5 @@
 import type { Handler } from "elysia";
-import { AppError, type ApiResponse } from "../types";
+import { AppError, type ApiResponse } from "../src/types";
 
 /**
  * Global error handler middleware for Astra Framework.

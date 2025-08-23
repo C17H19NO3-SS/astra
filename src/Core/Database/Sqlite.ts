@@ -1,5 +1,4 @@
 import { Database } from "bun:sqlite";
-import type { QueryResult } from "mysql2/promise";
 
 // Custom QueryResult for SQLite to match MySQL interface
 interface SQLiteQueryResult {
@@ -19,12 +18,17 @@ export class SQLiteDriver {
   }
 
   private initializeConnection(): void {
-    // Enable WAL mode for better performance
-    this.connection.exec("PRAGMA journal_mode = WAL;");
-    // Enable foreign key constraints
-    this.connection.exec("PRAGMA foreign_keys = ON;");
-    // Set timeout for busy database
-    this.connection.exec("PRAGMA busy_timeout = 10000;");
+    try {
+      // Enable WAL mode for better performance
+      this.connection.exec("PRAGMA journal_mode = WAL;");
+      // Enable foreign key constraints
+      this.connection.exec("PRAGMA foreign_keys = ON;");
+      // Set timeout for busy database
+      this.connection.exec("PRAGMA busy_timeout = 10000;");
+      console.log("SQLite connection initialized with WAL mode");
+    } catch (error) {
+      console.error("Error initializing SQLite connection:", error);
+    }
   }
 
   getConnection(): Database {
@@ -54,6 +58,7 @@ export class SQLiteDriver {
 
         resolve([result, queryResult]);
       } catch (error) {
+        console.error("SQLite query failed:", error);
         reject(error);
       }
     });
@@ -78,6 +83,7 @@ export class SQLiteDriver {
 
         resolve([[] as T[], queryResult]);
       } catch (error) {
+        console.error("SQLite execute failed:", error);
         reject(error);
       }
     });
@@ -88,8 +94,13 @@ export class SQLiteDriver {
     sql: string,
     parameters: any[] = []
   ): Promise<T | null> {
-    const [results] = await this.query<T>(sql, parameters);
-    return results.length > 0 ? (results[0] as T) : null;
+    try {
+      const [results] = await this.query<T>(sql, parameters);
+      return results.length > 0 ? (results[0] as T) : null;
+    } catch (error) {
+      console.error("SQLite queryOne failed:", error);
+      return null;
+    }
   }
 
   // Begin transaction
@@ -122,23 +133,49 @@ export class SQLiteDriver {
 
   // Close connection
   close(): void {
-    if (this.connection) {
-      this.connection.close();
+    try {
+      if (this.connection) {
+        this.connection.close();
+        console.log("SQLite connection closed");
+      }
+    } catch (error) {
+      console.error("Error closing SQLite connection:", error);
     }
+  }
+
+  // Get connection stats
+  getStats() {
+    return {
+      database: this.database,
+      activeDatabase: "sqlite",
+      type: "sqlite",
+      available: true,
+      connectionType: "file-based",
+    };
   }
 
   // Check if table exists
   async tableExists(tableName: string): Promise<boolean> {
-    const [result] = await this.query(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      [tableName]
-    );
-    return result.length > 0;
+    try {
+      const [result] = await this.query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+        [tableName]
+      );
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error checking table existence:", error);
+      return false;
+    }
   }
 
   // Get table schema
   async getTableSchema(tableName: string): Promise<any[]> {
-    const [result] = await this.query(`PRAGMA table_info(${tableName})`);
-    return result;
+    try {
+      const [result] = await this.query(`PRAGMA table_info(${tableName})`);
+      return result;
+    } catch (error) {
+      console.error("Error getting table schema:", error);
+      return [];
+    }
   }
 }

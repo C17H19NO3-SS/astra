@@ -41,7 +41,7 @@ export const corsMiddleware = (options: CorsOptions = {}): Handler => {
 
     // Get origin from request
     const requestOrigin =
-      request.headers.get("origin") || request.headers.get("host") || "";
+      request?.headers?.get("origin") || request?.headers?.get("host") || "";
 
     // Determine if origin is allowed
     let allowedOrigin = "*";
@@ -70,7 +70,7 @@ export const corsMiddleware = (options: CorsOptions = {}): Handler => {
     }
 
     // Handle preflight requests (OPTIONS)
-    if (request.method === "OPTIONS") {
+    if (request?.method === "OPTIONS") {
       return new Response(null, {
         status: optionsSuccessStatus,
         headers,
@@ -78,27 +78,6 @@ export const corsMiddleware = (options: CorsOptions = {}): Handler => {
     }
 
     // Add CORS headers to response
-    ctx.set.headers = {
-      ...ctx.set.headers,
-      ...headers,
-    };
+    ctx.set.headers = headers;
   };
 };
-
-/**
- * Default CORS middleware with common settings
- */
-export const defaultCorsMiddleware: Handler = corsMiddleware({
-  origin: true,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept",
-    "Origin",
-    "Cache-Control",
-    "X-File-Name",
-  ],
-});
