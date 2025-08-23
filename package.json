@@ -20,5 +20,6 @@
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts"
-  }
+  },
+  "license": "MIT"
 }
