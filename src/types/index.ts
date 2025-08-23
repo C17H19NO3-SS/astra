@@ -1,5 +1,6 @@
 import type {
   BaseMacro,
+  Handler,
   InputSchema,
   LocalHook,
   MergeSchema,
@@ -19,3 +20,10 @@ export type Schema<T extends ""> = LocalHook<
   BaseMacro,
   never
 >;
+
+export interface RouteSchema<T extends ""> {
+  handler: Handler;
+  schema?: Schema<T>;
+}
+
+export interface User {}
