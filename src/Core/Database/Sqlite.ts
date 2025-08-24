@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import path from "path";
 
 // Custom QueryResult for SQLite to match MySQL interface
 interface SQLiteQueryResult {
@@ -11,9 +12,12 @@ export class SQLiteDriver {
   private database: string;
   private connection: Database;
 
-  constructor(database: string) {
+  constructor(database: string, readonly: boolean = false) {
     this.database = database;
-    this.connection = new Database(database, { create: true });
+    this.connection = new Database(
+      path.join(process.cwd(), "Databases", database),
+      { create: true, readonly }
+    );
     this.initializeConnection();
   }
 

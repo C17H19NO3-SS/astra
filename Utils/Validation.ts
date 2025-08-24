@@ -1,4 +1,4 @@
-import type { ValidationSchema, ValidationRule } from "../types";
+import type { ValidationRule, ValidationSchema } from "../src/types";
 
 /**
  * Validation utility class for input validation

@@ -35,8 +35,9 @@ export class Database {
    */
   private initializeDrivers(): void {
     try {
-      const activeDatabase = process.env.DATABASE_TYPE as DatabaseType || DEFAULT_DATABASE;
-      
+      const activeDatabase =
+        (process.env.DATABASE_TYPE as DatabaseType) || DEFAULT_DATABASE;
+
       // Only initialize the active database driver
       if (activeDatabase === "mysql") {
         // Initialize MySQL driver if configured and active
@@ -47,7 +48,9 @@ export class Database {
           this.defaultDriver = "mysql";
           log.info("MySQL driver initialized as active database");
         } else {
-          log.error("MySQL is selected but configuration is incomplete, falling back to SQLite");
+          log.error(
+            "MySQL is selected but configuration is incomplete, falling back to SQLite"
+          );
           this.initializeSQLite();
         }
       } else {
@@ -57,8 +60,12 @@ export class Database {
 
       // Verify default driver exists
       if (!this.drivers.has(this.defaultDriver)) {
-        log.error(`Selected database driver '${this.defaultDriver}' failed to initialize`);
-        throw new Error(`Database driver '${this.defaultDriver}' is not available`);
+        log.error(
+          `Selected database driver '${this.defaultDriver}' failed to initialize`
+        );
+        throw new Error(
+          `Database driver '${this.defaultDriver}' is not available`
+        );
       }
 
       log.info(`Database initialized: ${this.defaultDriver}`);
@@ -95,7 +102,9 @@ export class Database {
     const dbDriver = this.drivers.get(driver);
 
     if (!dbDriver) {
-      throw new Error(`Database driver '${driver}' is not available or not initialized`);
+      throw new Error(
+        `Database driver '${driver}' is not available or not initialized`
+      );
     }
 
     return dbDriver;
@@ -163,7 +172,8 @@ export class Database {
   async queryOne<T = any>(sql: string, params: any[] = []): Promise<T | null> {
     const [results] = await this.query<T>(sql, params);
     // Fix undefined to null conversion
-    const firstResult = Array.isArray(results) && results.length > 0 ? results[0] : undefined;
+    const firstResult =
+      Array.isArray(results) && results.length > 0 ? results[0] : undefined;
     return firstResult !== undefined ? firstResult : null;
   }
 
@@ -221,10 +231,10 @@ export class Database {
     if (activeType === "mysql" && "getStats" in driver) {
       stats[activeType] = (driver as MysqlDriver).getStats();
     } else {
-      stats[activeType] = { 
-        type: activeType, 
+      stats[activeType] = {
+        type: activeType,
         available: true,
-        active: true 
+        active: true,
       };
     }
 

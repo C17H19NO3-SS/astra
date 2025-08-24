@@ -127,7 +127,7 @@ export const InitWebServer = (): Elysia => {
       const health = {
         status: "healthy",
         timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
+        uptime: Number(process.uptime().toFixed(2)),
         memory: process.memoryUsage(),
         database: dbHealth,
         stats: dbStats,
