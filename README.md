@@ -101,13 +101,77 @@ astra/
 
 ## 🎮 Usage Examples
 
+### Schema Validation with Elysia's `t` System
+
+Astra Framework uses Elysia's built-in validation system with the `t` object for type-safe schema definitions. This provides better TypeScript integration and runtime validation.
+
+```typescript
+import { t } from "elysia";
+
+// Common validation patterns
+const userSchema = t.Object({
+  name: t.String({ minLength: 2, maxLength: 50 }),
+  email: t.String({ format: "email" }),
+  age: t.Optional(t.Number({ minimum: 18, maximum: 120 })),
+  role: t.Union([t.Literal("admin"), t.Literal("user")]),
+  preferences: t.Object({
+    theme: t.String({ default: "light" }),
+    notifications: t.Boolean({ default: true })
+  })
+});
+
+// Query parameters
+const querySchema = t.Object({
+  page: t.Number({ minimum: 1, default: 1 }),
+  limit: t.Number({ minimum: 1, maximum: 100, default: 10 }),
+  search: t.Optional(t.String({ minLength: 1 }))
+});
+
+// Path parameters
+const paramsSchema = t.Object({
+  id: t.Number({ minimum: 1 })
+});
+```
+
+**Key Benefits of Elysia's `t` System:**
+
+- 🔒 **Runtime Validation**: Automatic request/response validation
+- 📝 **TypeScript Integration**: Full type inference and IntelliSense  
+- 🚀 **Performance**: Optimized validation with minimal overhead
+- 📚 **Auto Documentation**: Swagger docs generated from schemas
+- 🔧 **Extensible**: Custom validation rules and transformations
+
+**Available Validation Types:**
+```typescript
+// Primitive types
+t.String()     // string
+t.Number()     // number  
+t.Boolean()    // boolean
+t.Date()       // Date object
+t.Null()       // null
+t.Undefined()  // undefined
+
+// Complex types
+t.Object({ ... })           // Object with properties
+t.Array(t.String())        // Array of strings
+t.Union([t.String(), t.Number()])  // String OR Number
+t.Optional(t.String())     // Optional string
+t.Literal("admin")         // Exact string value
+
+// With constraints
+t.String({ minLength: 3, maxLength: 50, pattern: "^[a-zA-Z]+$" })
+t.Number({ minimum: 0, maximum: 100, multipleOf: 5 })
+t.Array(t.String(), { minItems: 1, maxItems: 10 })
+```
+
 ### Creating Your First Controller
 
 ```typescript
 import { BaseController } from "../src/Core/Controller/BaseController";
 import type { RouteSchema } from "../src/types";
+import { t } from "elysia";
 
-export class UserController<T extends string> extends BaseController<T> {
+export class UserController<T extends ""> extends BaseController<T> {
   constructor() {
     super("/api/users" as T, true); // Base path + auth required
   }
@@ -119,11 +183,19 @@ export class UserController<T extends string> extends BaseController<T> {
       return this.json({ users, count: users.length });
     },
     schema: {
-      summary: "Get all users",
-      tags: ["Users"],
-      response: {
-        200: { type: "object", properties: { users: { type: "array" } } }
-      }
+      detail: {
+        summary: "Get all users",
+        tags: ["Users"],
+      },
+      response: t.Object({
+        users: t.Array(t.Object({
+          id: t.Number(),
+          name: t.String(),
+          email: t.String(),
+          created_at: t.Optional(t.String())
+        })),
+        count: t.Number()
+      })
     }
   };
 
@@ -136,22 +208,97 @@ export class UserController<T extends string> extends BaseController<T> {
       return this.json({ success: true, user: newUser }, 201);
     },
     schema: {
-      summary: "Create a new user",
-      tags: ["Users"],
-      body: {
-        type: "object",
-        required: ["name", "email"],
-        properties: {
-          name: { type: "string" },
-          email: { type: "string", format: "email" }
-        }
+      detail: {
+        summary: "Create a new user",
+        tags: ["Users"],
+      },
+      body: t.Object({
+        name: t.String({ minLength: 1 }),
+        email: t.String({ format: "email" })
+      }),
+      response: t.Object({
+        success: t.Boolean(),
+        user: t.Object({
+          id: t.Number(),
+          name: t.String(),
+          email: t.String()
+        })
+      })
+    }
+  };
+
+  // GET /api/users/:id
+  getUserById: RouteSchema<T> = {
+    handler: async ({ params }) => {
+      const user = await this.db.query(
+        "SELECT * FROM users WHERE id = ? LIMIT 1", 
+        [params.id]
+      );
+      
+      if (!user.length) {
+        return this.json({ error: "User not found" }, 404);
       }
+      
+      return this.json({ user: user[0] });
+    },
+    schema: {
+      detail: {
+        summary: "Get user by ID",
+        tags: ["Users"]
+      },
+      params: t.Object({
+        id: t.Number({ minimum: 1 })
+      }),
+      response: {
+        200: t.Object({
+          user: t.Object({
+            id: t.Number(),
+            name: t.String(),
+            email: t.String(),
+            created_at: t.Optional(t.String())
+          })
+        }),
+        404: t.Object({
+          error: t.String()
+        })
+      }
+    }
+  };
+
+  // PUT /api/users/:id
+  updateUser: RouteSchema<T> = {
+    handler: async ({ params, body }) => {
+      const result = await this.db.query(
+        "UPDATE users SET name = ?, email = ? WHERE id = ?",
+        [body.name, body.email, params.id]
+      );
+      
+      if (result.affectedRows === 0) {
+        return this.json({ error: "User not found" }, 404);
+      }
+      
+      return this.json({ success: true, message: "User updated" });
+    },
+    schema: {
+      detail: {
+        summary: "Update user",
+        tags: ["Users"]
+      },
+      params: t.Object({
+        id: t.Number({ minimum: 1 })
+      }),
+      body: t.Object({
+        name: t.String({ minLength: 1 }),
+        email: t.String({ format: "email" })
+      })
     }
   };
 
   protected onInit() {
     this.Route("get", "/", this.getUsers.handler, this.getUsers.schema || {});
     this.Route("post", "/", this.createUser.handler, this.createUser.schema || {});
+    this.Route("get", "/:id", this.getUserById.handler, this.getUserById.schema || {});
+    this.Route("put", "/:id", this.updateUser.handler, this.updateUser.schema || {});
   }
 }
 ```
@@ -270,7 +417,8 @@ export const requireRole = (role: string) => ({ user }: AuthContext) => {
 // Usage in controller
 constructor() {
   super("/admin" as T, true);
-  this.addMiddleware(requireRole("admin"));
+  // Note: addMiddleware method would need to be implemented in BaseController
+  this.getBeforeHandlers().push(requireRole("admin"));
 }
 ```
 
