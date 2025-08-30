@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import type { JwtPayload } from "../types";
+import type { JwtPayload } from "../src/types";
 
 /**
  * Enhanced utility class for handling JSON Web Tokens (JWT).
@@ -29,8 +29,8 @@ export class JwtUtils {
   /**
    * Get JWT expiration time from environment variables
    */
-  private static getExpiresIn(): string {
-    return process.env.JWT_EXPIRES_IN || this.DEFAULT_EXPIRES_IN;
+  private static getExpiresIn(): jwt.SignOptions["expiresIn"] {
+    return (process.env.JWT_EXPIRES_IN || this.DEFAULT_EXPIRES_IN) as jwt.SignOptions["expiresIn"];
   }
 
   /**
@@ -42,7 +42,7 @@ export class JwtUtils {
   static encrypt(
     payload: any,
     options?: {
-      expiresIn?: string;
+      expiresIn?: jwt.SignOptions["expiresIn"];
       issuer?: string;
       audience?: string;
       subject?: string;
@@ -53,7 +53,7 @@ export class JwtUtils {
 
       const signOptions: jwt.SignOptions = {
         algorithm: this.ALGORITHM,
-        expiresIn: Number(options?.expiresIn || this.getExpiresIn()),
+        expiresIn: options?.expiresIn ?? this.getExpiresIn(),
         issuer: options?.issuer || "astra-framework",
         audience: options?.audience,
         subject: options?.subject,
@@ -179,7 +179,10 @@ export class JwtUtils {
    * @param newExpiresIn - New expiration time
    * @returns New JWT token or false if original token is invalid
    */
-  static refresh(token: string, newExpiresIn?: string): string | false {
+  static refresh(
+    token: string,
+    newExpiresIn?: jwt.SignOptions["expiresIn"]
+  ): string | false {
     try {
       const decoded = this.decrypt(token, { ignoreExpiration: true });
       if (!decoded) return false;
@@ -190,7 +193,9 @@ export class JwtUtils {
       delete (payload as any).exp;
       delete (payload as any).nbf;
 
-      return this.encrypt(payload, { expiresIn: newExpiresIn });
+      return this.encrypt(payload, {
+        expiresIn: newExpiresIn ?? this.getExpiresIn(),
+      });
     } catch {
       return false;
     }
